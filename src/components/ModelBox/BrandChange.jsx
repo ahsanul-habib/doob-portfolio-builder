@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 const BrandChange = (props) => {
@@ -14,54 +14,58 @@ const BrandChange = (props) => {
   };
 
   const toggleActive = (index) => {
-    const updatedBrandsClient = brandsClient.map((brand, i) => 
-      i === index ? { ...brand, active: !brand.active } : brand
-    );
+    const updatedBrandsClient = [...brandsClient];
+    updatedBrandsClient[index].active = !updatedBrandsClient[index].active;
     changeBrandsClient(updatedBrandsClient);
   };
 
   const setAnImageToClient = (index, img_src) => {
-    const updatedBrandsClient = brandsClient.map((brand, i) => 
-      i === index ? { ...brand, img_src } : brand
-    );
-    changeBrandsClient(updatedBrandsClient);
+    changeBrandsClient((prev) => {
+      const updated = [...prev];
+      updated[index].img_src = img_src;
+      return updated;
+    });
+  };
+
+  const handleImageInputChange = (index, event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      setAnImageToClient(index, e.target.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
-    <div className="fixed w-screen hidden h-screen z-20" id="brand-change-modal">
+    <div className="fixed w-screen h-screen hidden z-20" id="brand-change-modal">
       <div className="relative w-full h-full backdrop-blur-lg backdrop-filter flex flex-col justify-center items-center">
         <div className="absolute w-10/12 bg-slate-200 rounded-lg flex flex-col items-center p-5 gap-3 max-h-8/10 overflow-y-scroll">
-          <h1 className='text-3xl font-bold'>Brands</h1>
+          <h1 className="text-3xl font-bold">Brands</h1>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {brandsClient.map((brand, index) => {
-              const [imageSrc, setImageSrc] = useState(brand.img_src || '');
-
-              const handleImageInputChange = (event) => {
-                const file = event.target.files[0];
-                const reader = new FileReader();
-
-                reader.onload = function (e) {
-                  setImageSrc(e.target.result);
-                  setAnImageToClient(index, e.target.result);
-                };
-                reader.readAsDataURL(file);
-              };
-
-              return (
-                <div key={uuidv4()} className='bg-gray-100 flex flex-col gap-3 justify-between items-center'>
-                  <input type="file" accept="image/*" onChange={handleImageInputChange} />
-                  {imageSrc && (
-                    <img key={uuidv4()} className="self-center w-full p-8 rounded-lg" src={imageSrc} alt="Preview" />
-                  )}
-                  <input
-                    className='w-7 h-7'
-                    type="checkbox"
-                    checked={brand.active}
-                    onChange={() => toggleActive(index)}
+            {brandsClient.map((brand, index) => (
+              <div key={uuidv4()} className="bg-gray-100 flex flex-col gap-3 justify-between items-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageInputChange(index, e)}
+                />
+                {brand.img_src && (
+                  <img
+                    key={uuidv4()}
+                    className="self-center w-full p-8 rounded-lg"
+                    src={brand.img_src}
+                    alt="Preview"
                   />
-                </div>
-              );
-            })}
+                )}
+                <input
+                  className="w-7 h-7"
+                  type="checkbox"
+                  defaultChecked={brand.active}
+                  onChange={() => toggleActive(index)}
+                />
+              </div>
+            ))}
           </div>
           <div>
             <button
